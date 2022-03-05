@@ -56,6 +56,10 @@ func returnAllPersonalityQuestions(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Println("server started running at port :9400")
+
+	/** handle all the routes here */
 	http.HandleFunc("/", returnAllPersonalityQuestions)
+
+	/** listen to the running Port here */
 	http.ListenAndServe(":9400", nil)
 }
