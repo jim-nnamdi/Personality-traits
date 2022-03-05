@@ -2,10 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"log"
 	"net/http"
+	"text/template"
 )
+
+var tmpl = template.Must(template.ParseGlob("forms/*"))
 
 type Personality struct {
 	Id        int
@@ -50,7 +52,33 @@ func returnAllPersonalityQuestions(w http.ResponseWriter, r *http.Request) {
 
 		personalityQuestions = append(personalityQuestions, personalityQuestion)
 	}
-	json.NewEncoder(w).Encode(personalityQuestions)
+	tmpl.ExecuteTemplate(w, "returnAllPersonalityQuestions", nil)
+	defer db.Close()
+}
+
+func returnSinglePersonalityQuestion(w http.ResponseWriter, r *http.Request) {
+	db := DatabaseConnection()
+
+	id := r.URL.Query().Get("id")
+	result, err := db.Query("select * from questions where id = ?", id)
+	ErrorCheck(err)
+
+	singleQuestion := Personality{}
+	for result.Next() {
+		var id int
+		var question string
+		var answer string
+		var scoreline int
+
+		err := result.Scan(&id, &question, &answer, &scoreline)
+		ErrorCheck(err)
+
+		singleQuestion.Id = id
+		singleQuestion.Question = question
+		singleQuestion.Answer = answer
+		singleQuestion.Scoreline = scoreline
+	}
+	tmpl.ExecuteTemplate(w, "returnSinglePersonalityQuestion", nil)
 	defer db.Close()
 }
 
