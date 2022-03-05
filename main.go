@@ -1,6 +1,18 @@
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+	"encoding/json"
+	"log"
+	"net/http"
+)
+
+type Personality struct {
+	Id        int
+	Question  string
+	Answer    string
+	Scoreline int
+}
 
 func ErrorCheck(err error) {
 	if err != nil {
@@ -14,6 +26,36 @@ func DatabaseConnection() (db *sql.DB) {
 	return db
 }
 
-func main() {
+func returnAllPersonalityQuestions(w http.ResponseWriter, r *http.Request) {
+	db := DatabaseConnection()
+	results, err := db.Query("select * from questions")
+	ErrorCheck(err)
 
+	personalityQuestion := Personality{}
+	personalityQuestions := []Personality{}
+
+	for results.Next() {
+		var id int
+		var question string
+		var answer string
+		var scoreline int
+
+		err := results.Scan(&id, &question, &answer, &scoreline)
+		ErrorCheck(err)
+
+		personalityQuestion.Id = id
+		personalityQuestion.Question = question
+		personalityQuestion.Answer = answer
+		personalityQuestion.Scoreline = scoreline
+
+		personalityQuestions = append(personalityQuestions, personalityQuestion)
+	}
+	json.NewEncoder(w).Encode(personalityQuestions)
+	defer db.Close()
+}
+
+func main() {
+	log.Println("server started running at port :9400")
+	http.HandleFunc("/", returnAllPersonalityQuestions)
+	http.ListenAndServe(":9400", nil)
 }
