@@ -131,9 +131,20 @@ func saveAnswersToPersonalityTest(w http.ResponseWriter, r *http.Request) {
 		ErrorCheck(err)
 		scoreline := (i + j)
 
-		stmt, err := db.Prepare("insert into questions (answer1, answer2, scoreline) values(?, ?, ?)")
-		ErrorCheck(err)
-		stmt.Exec(answer1, answer2, scoreline)
+		if scoreline < 2 || scoreline < 0 {
+			scorelineresult := "introvert"
+
+			stmt, err := db.Prepare("insert into questions (answer1, answer2, scoreline) values(?, ?, ?)")
+			ErrorCheck(err)
+			stmt.Exec(answer1, answer2, scorelineresult)
+		} else {
+			scorelineresult := "extrovert"
+
+			stmt, err := db.Prepare("insert into questions (answer1, answer2, scoreline) values(?, ?, ?)")
+			ErrorCheck(err)
+			stmt.Exec(answer1, answer2, scorelineresult)
+		}
+
 		log.Println("data submitted successfully")
 	}
 	defer db.Close()
