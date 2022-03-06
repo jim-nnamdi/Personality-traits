@@ -138,6 +138,7 @@ func saveAnswersToPersonalityTest(w http.ResponseWriter, r *http.Request) {
 			ErrorCheck(err)
 			stmt.Exec(answer1, answer2, scorelineresult)
 		} else {
+
 			scorelineresult := "extrovert"
 
 			stmt, err := db.Prepare("insert into questions (answer1, answer2, scoreline) values(?, ?, ?)")
@@ -147,6 +148,18 @@ func saveAnswersToPersonalityTest(w http.ResponseWriter, r *http.Request) {
 
 		log.Println("data submitted successfully")
 	}
+	defer db.Close()
+	http.Redirect(w, r, "/", 301)
+}
+
+func deletePersonalityTraitData(w http.ResponseWriter, r *http.Request) {
+	db := DatabaseConnection()
+	id := r.URL.Query().Get("id")
+
+	stmt, err := db.Prepare("delete * from questions where id = ?")
+	ErrorCheck(err)
+	stmt.Exec(id)
+	log.Println("resource trait deleted !")
 	defer db.Close()
 	http.Redirect(w, r, "/", 301)
 }
