@@ -6,36 +6,38 @@ import (
 	"net/http"
 	"strconv"
 	"text/template"
+
+	"github.com/jim-nnamdi/Personality-traits.git/models"
 )
 
 var tmpl = template.Must(template.ParseGlob("forms/*"))
 
-type Personality struct {
-	Id        int
-	Answer1   string
-	Answer2   string
-	Scoreline int
-}
+// type Personality struct {
+// 	Id        int
+// 	Answer1   string
+// 	Answer2   string
+// 	Scoreline int
+// }
 
-func ErrorCheck(err error) {
-	if err != nil {
-		panic(err.Error())
-	}
-}
+// func ErrorCheck(err error) {
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+// }
 
 func DatabaseConnection() (db *sql.DB) {
 	db, err := sql.Open("mysql", "root:root@tcp(localhost:8889)/personalitytest")
-	ErrorCheck(err)
+	models.ErrorCheck(err)
 	return db
 }
 
 func ReturnAllPersonalityQuestions(w http.ResponseWriter, r *http.Request) {
 	db := DatabaseConnection()
 	results, err := db.Query("select * from questions")
-	ErrorCheck(err)
+	models.ErrorCheck(err)
 
-	personalityQuestion := Personality{}
-	personalityQuestions := []Personality{}
+	personalityQuestion := models.Personality{}
+	personalityQuestions := []models.Personality{}
 
 	for results.Next() {
 		var id int
@@ -44,7 +46,7 @@ func ReturnAllPersonalityQuestions(w http.ResponseWriter, r *http.Request) {
 		var scoreline int
 
 		err := results.Scan(&id, &answer1, &answer2, &scoreline)
-		ErrorCheck(err)
+		models.ErrorCheck(err)
 
 		personalityQuestion.Id = id
 		personalityQuestion.Answer1 = answer1
@@ -62,9 +64,9 @@ func ReturnSinglePersonalityQuestion(w http.ResponseWriter, r *http.Request) {
 
 	id := r.URL.Query().Get("id")
 	result, err := db.Query("select * from questions where id = ?", id)
-	ErrorCheck(err)
+	models.ErrorCheck(err)
 
-	singleQuestion := Personality{}
+	singleQuestion := models.Personality{}
 	for result.Next() {
 		var id int
 		var answer1 string
@@ -72,7 +74,7 @@ func ReturnSinglePersonalityQuestion(w http.ResponseWriter, r *http.Request) {
 		var scoreline int
 
 		err := result.Scan(&id, &answer1, &answer2, &scoreline)
-		ErrorCheck(err)
+		models.ErrorCheck(err)
 
 		singleQuestion.Id = id
 		singleQuestion.Answer1 = answer1
@@ -88,9 +90,9 @@ func EditPersonalityQuestion(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 
 	results, err := db.Query("select * from questions where id = ?", id)
-	ErrorCheck(err)
+	models.ErrorCheck(err)
 
-	result := Personality{}
+	result := models.Personality{}
 	for results.Next() {
 		var id int
 		var answer1 string
@@ -98,7 +100,7 @@ func EditPersonalityQuestion(w http.ResponseWriter, r *http.Request) {
 		var scoreline int
 
 		err := results.Scan(&id, &answer1, &answer2, &scoreline)
-		ErrorCheck(err)
+		models.ErrorCheck(err)
 
 		result.Id = id
 		result.Answer1 = answer1
@@ -117,24 +119,24 @@ func SaveAnswersToPersonalityTest(w http.ResponseWriter, r *http.Request) {
 		answer2 := r.FormValue("answer2")
 
 		i, err := strconv.Atoi(answer1)
-		ErrorCheck(err)
+		models.ErrorCheck(err)
 
 		j, err := strconv.Atoi(answer2)
-		ErrorCheck(err)
+		models.ErrorCheck(err)
 		scoreline := (i + j)
 
 		if scoreline < 2 || scoreline < 0 {
 			scorelineresult := "introvert"
 
 			stmt, err := db.Prepare("insert into questions (answer1, answer2, scoreline) values(?, ?, ?)")
-			ErrorCheck(err)
+			models.ErrorCheck(err)
 			stmt.Exec(answer1, answer2, scorelineresult)
 		} else {
 
 			scorelineresult := "extrovert"
 
 			stmt, err := db.Prepare("insert into questions (answer1, answer2, scoreline) values(?, ?, ?)")
-			ErrorCheck(err)
+			models.ErrorCheck(err)
 			stmt.Exec(answer1, answer2, scorelineresult)
 		}
 
@@ -153,22 +155,22 @@ func UpdatePersonalityTraitData(w http.ResponseWriter, r *http.Request) {
 		answer2 := r.FormValue("answer2")
 
 		i, err := strconv.Atoi(answer1)
-		ErrorCheck(err)
+		models.ErrorCheck(err)
 
 		j, err := strconv.Atoi(answer2)
-		ErrorCheck(err)
+		models.ErrorCheck(err)
 
 		scoreline := i + j
 
 		if scoreline < 2 || scoreline < 0 {
 			scorelineresult := "introvert"
 			stmt, err := db.Prepare("update questions set answer1 = ?, answer2 =?, scoreline=? where id=?")
-			ErrorCheck(err)
+			models.ErrorCheck(err)
 			stmt.Exec(answer1, answer2, scorelineresult, id)
 		} else {
 			scorelineresult := "extrovert"
 			stmt, err := db.Prepare("update questions set answer1 =?, answer2=?, scoreline=? where id =?")
-			ErrorCheck(err)
+			models.ErrorCheck(err)
 			stmt.Exec(answer1, answer2, scorelineresult, id)
 		}
 		defer db.Close()
@@ -181,7 +183,7 @@ func DeletePersonalityTraitData(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 
 	stmt, err := db.Prepare("delete * from questions where id = ?")
-	ErrorCheck(err)
+	models.ErrorCheck(err)
 	stmt.Exec(id)
 	log.Println("resource trait deleted !")
 	defer db.Close()
