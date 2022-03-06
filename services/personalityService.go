@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"strconv"
 	"text/template"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jim-nnamdi/Personality-traits.git/models"
 )
 
@@ -18,9 +18,10 @@ func DatabaseConnection() (db *sql.DB) {
 	return db
 }
 
+/**  we can return all instances of the test taken, but i'll return the latest one*/
 func ReturnAllPersonalityQuestions(w http.ResponseWriter, r *http.Request) {
 	db := DatabaseConnection()
-	results, err := db.Query("select * from questions")
+	results, err := db.Query("select * from questions order by id desc limit 1")
 	models.ErrorCheck(err)
 
 	personalityQuestion := models.Personality{}
@@ -30,7 +31,7 @@ func ReturnAllPersonalityQuestions(w http.ResponseWriter, r *http.Request) {
 		var id int
 		var answer1 string
 		var answer2 string
-		var scoreline int
+		var scoreline string
 
 		err := results.Scan(&id, &answer1, &answer2, &scoreline)
 		models.ErrorCheck(err)
@@ -42,7 +43,7 @@ func ReturnAllPersonalityQuestions(w http.ResponseWriter, r *http.Request) {
 
 		personalityQuestions = append(personalityQuestions, personalityQuestion)
 	}
-	tmpl.ExecuteTemplate(w, "returnAllPersonalityQuestions", nil)
+	tmpl.ExecuteTemplate(w, "result", personalityQuestions)
 	defer db.Close()
 }
 
@@ -58,7 +59,7 @@ func ReturnSinglePersonalityQuestion(w http.ResponseWriter, r *http.Request) {
 		var id int
 		var answer1 string
 		var answer2 string
-		var scoreline int
+		var scoreline string
 
 		err := result.Scan(&id, &answer1, &answer2, &scoreline)
 		models.ErrorCheck(err)
@@ -68,7 +69,7 @@ func ReturnSinglePersonalityQuestion(w http.ResponseWriter, r *http.Request) {
 		singleQuestion.Answer2 = answer2
 		singleQuestion.Scoreline = scoreline
 	}
-	tmpl.ExecuteTemplate(w, "returnAllPersonalityQuestions", nil)
+	tmpl.ExecuteTemplate(w, "show", singleQuestion)
 	defer db.Close()
 }
 
@@ -84,7 +85,7 @@ func EditPersonalityQuestion(w http.ResponseWriter, r *http.Request) {
 		var id int
 		var answer1 string
 		var answer2 string
-		var scoreline int
+		var scoreline string
 
 		err := results.Scan(&id, &answer1, &answer2, &scoreline)
 		models.ErrorCheck(err)
@@ -105,14 +106,7 @@ func SaveAnswersToPersonalityTest(w http.ResponseWriter, r *http.Request) {
 		answer1 := r.FormValue("answer1")
 		answer2 := r.FormValue("answer2")
 
-		i, err := strconv.Atoi(answer1)
-		models.ErrorCheck(err)
-
-		j, err := strconv.Atoi(answer2)
-		models.ErrorCheck(err)
-		scoreline := (i + j)
-
-		if scoreline < 2 || scoreline < 0 {
+		if answer1 == "true" && answer2 == "false" || answer1 == "false" && answer2 == "true" {
 			scorelineresult := "introvert"
 
 			stmt, err := db.Prepare("insert into questions (answer1, answer2, scoreline) values(?, ?, ?)")
@@ -126,11 +120,10 @@ func SaveAnswersToPersonalityTest(w http.ResponseWriter, r *http.Request) {
 			models.ErrorCheck(err)
 			stmt.Exec(answer1, answer2, scorelineresult)
 		}
-
 		log.Println("data submitted successfully")
 	}
 	defer db.Close()
-	http.Redirect(w, r, "/", 301)
+	http.Redirect(w, r, "result", 301)
 }
 
 func UpdatePersonalityTraitData(w http.ResponseWriter, r *http.Request) {
@@ -141,15 +134,12 @@ func UpdatePersonalityTraitData(w http.ResponseWriter, r *http.Request) {
 		answer1 := r.FormValue("answer1")
 		answer2 := r.FormValue("answer2")
 
-		i, err := strconv.Atoi(answer1)
-		models.ErrorCheck(err)
+		// instead of this i should have done a proper validation
+		if answer1 == "" || answer2 == "" {
+			log.Fatal(" answers not filled! ")
+		}
 
-		j, err := strconv.Atoi(answer2)
-		models.ErrorCheck(err)
-
-		scoreline := i + j
-
-		if scoreline < 2 || scoreline < 0 {
+		if answer1 == "true" && answer2 == "false" || answer1 == "false" && answer2 == "true" {
 			scorelineresult := "introvert"
 			stmt, err := db.Prepare("update questions set answer1 = ?, answer2 =?, scoreline=? where id=?")
 			models.ErrorCheck(err)
@@ -175,4 +165,8 @@ func DeletePersonalityTraitData(w http.ResponseWriter, r *http.Request) {
 	log.Println("resource trait deleted !")
 	defer db.Close()
 	http.Redirect(w, r, "/", 301)
+}
+
+func LandingScreen(w http.ResponseWriter, r *http.Request) {
+	tmpl.ExecuteTemplate(w, "index", nil)
 }

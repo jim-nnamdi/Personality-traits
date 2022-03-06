@@ -1,0 +1,14 @@
+{{ define "result" }} 
+{{ template "resulthead" }}
+
+<div class="container">
+<div class="alert alert-info mx-auto">
+ Based on the Personality test you took the results have been calculated and the system has decided that you're an: <br><br> 
+{{ range . }}
+<button class="btn btn-lg btn-success"> {{ .Scoreline}} </button>
+{{ end }}
+</div>
+</div>
+{{ template "footer"}}
+
+{{ end }} 

@@ -4,7 +4,7 @@ type Personality struct {
 	Id        int
 	Answer1   string
 	Answer2   string
-	Scoreline int
+	Scoreline string
 }
 
 func ErrorCheck(err error) {

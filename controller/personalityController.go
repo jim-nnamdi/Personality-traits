@@ -44,3 +44,7 @@ func UpdatePersonalityTraitData(w http.ResponseWriter, r *http.Request) {
 func DeletePersonalityTraitData(w http.ResponseWriter, r *http.Request) {
 	services.DeletePersonalityTraitData(w, r)
 }
+
+func LandingScreen(w http.ResponseWriter, r *http.Request) {
+	services.LandingScreen(w, r)
+}

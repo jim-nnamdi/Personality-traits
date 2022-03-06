@@ -11,8 +11,9 @@ func Routes() {
 	log.Println("server started running at port :9400")
 
 	/** handle all the routes here */
-	http.HandleFunc("/", controller.CreateNewPersonalityQuestion)
-	http.HandleFunc("/start", controller.ReturnAllPersonalityQuestions)
+	http.HandleFunc("/", controller.LandingScreen)
+	http.HandleFunc("/result", controller.ReturnAllPersonalityQuestions)
+	http.HandleFunc("/start", controller.CreateNewPersonalityQuestion)
 	http.HandleFunc("/save", controller.SaveAnswersToPersonalityTest)
 	http.HandleFunc("/edit", controller.EditPersonalityQuestion)
 	http.HandleFunc("/update", controller.UpdatePersonalityTraitData)
