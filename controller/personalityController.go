@@ -5,27 +5,15 @@ import (
 	"net/http"
 	"text/template"
 
+	"github.com/jim-nnamdi/Personality-traits.git/models"
 	"github.com/jim-nnamdi/Personality-traits.git/services"
 )
 
 var tmpl = template.Must(template.ParseGlob("forms/*"))
 
-type Personality struct {
-	Id        int
-	Answer1   string
-	Answer2   string
-	Scoreline int
-}
-
-func ErrorCheck(err error) {
-	if err != nil {
-		panic(err.Error())
-	}
-}
-
 func DatabaseConnection() (db *sql.DB) {
 	db, err := sql.Open("mysql", "root:root@tcp(localhost:8889)/personalitytest")
-	ErrorCheck(err)
+	models.ErrorCheck(err)
 	return db
 }
 
