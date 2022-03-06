@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"strconv"
 	"text/template"
 )
 
@@ -11,7 +12,8 @@ var tmpl = template.Must(template.ParseGlob("forms/*"))
 
 type Personality struct {
 	Id        int
-	Answer    string
+	Answer1   string
+	Answer2   string
 	Scoreline int
 }
 
@@ -37,14 +39,16 @@ func returnAllPersonalityQuestions(w http.ResponseWriter, r *http.Request) {
 
 	for results.Next() {
 		var id int
-		var answer string
+		var answer1 string
+		var answer2 string
 		var scoreline int
 
-		err := results.Scan(&id, &answer, &scoreline)
+		err := results.Scan(&id, &answer1, &answer2, &scoreline)
 		ErrorCheck(err)
 
 		personalityQuestion.Id = id
-		personalityQuestion.Answer = answer
+		personalityQuestion.Answer1 = answer1
+		personalityQuestion.Answer2 = answer2
 		personalityQuestion.Scoreline = scoreline
 
 		personalityQuestions = append(personalityQuestions, personalityQuestion)
@@ -63,14 +67,16 @@ func returnSinglePersonalityQuestion(w http.ResponseWriter, r *http.Request) {
 	singleQuestion := Personality{}
 	for result.Next() {
 		var id int
-		var answer string
+		var answer1 string
+		var answer2 string
 		var scoreline int
 
-		err := result.Scan(&id, &answer, &scoreline)
+		err := result.Scan(&id, &answer1, &answer2, &scoreline)
 		ErrorCheck(err)
 
 		singleQuestion.Id = id
-		singleQuestion.Answer = answer
+		singleQuestion.Answer1 = answer1
+		singleQuestion.Answer2 = answer2
 		singleQuestion.Scoreline = scoreline
 	}
 	tmpl.ExecuteTemplate(w, "returnSinglePersonalityQuestion", nil)
@@ -91,26 +97,47 @@ func editPersonalityQuestion(w http.ResponseWriter, r *http.Request) {
 	result := Personality{}
 	for results.Next() {
 		var id int
-		var answer string
+		var answer1 string
+		var answer2 string
 		var scoreline int
 
-		err := results.Scan(&id, &answer, &scoreline)
+		err := results.Scan(&id, &answer1, &answer2, &scoreline)
 		ErrorCheck(err)
 
 		result.Id = id
-		result.Answer = answer
+		result.Answer1 = answer1
+		result.Answer2 = answer2
 		result.Scoreline = scoreline
 	}
 	tmpl.ExecuteTemplate(w, "edit", nil)
 	defer db.Close()
+}
+func calculatePersonalityScoreAvg(answer1, answer2 int) int {
+	solution := (answer1 + answer2) / 2
+	return solution
 }
 
 func saveAnswersToPersonalityTest(w http.ResponseWriter, r *http.Request) {
 	db := DatabaseConnection()
 
 	if r.Method == "POST" {
-		answer
+		answer1 := r.FormValue("answer1")
+		answer2 := r.FormValue("answer2")
+
+		i, err := strconv.Atoi(answer1)
+		ErrorCheck(err)
+
+		j, err := strconv.Atoi(answer2)
+		ErrorCheck(err)
+		scoreline := (i + j)
+
+		stmt, err := db.Prepare("insert into questions (answer1, answer2, scoreline) values(?, ?, ?)")
+		ErrorCheck(err)
+		stmt.Exec(answer1, answer2, scoreline)
+		log.Println("data submitted successfully")
 	}
+	defer db.Close()
+	http.Redirect(w, r, "/", 301)
 }
 
 func main() {
