@@ -152,6 +152,38 @@ func saveAnswersToPersonalityTest(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", 301)
 }
 
+func updatePersonalityTraitData(w http.ResponseWriter, r *http.Request) {
+	db := DatabaseConnection()
+	id := r.URL.Query().Get("id")
+
+	if r.Method == "PUT" {
+		answer1 := r.FormValue("answer1")
+		answer2 := r.FormValue("answer2")
+
+		i, err := strconv.Atoi(answer1)
+		ErrorCheck(err)
+
+		j, err := strconv.Atoi(answer2)
+		ErrorCheck(err)
+
+		scoreline := i + j
+
+		if scoreline < 2 || scoreline < 0 {
+			scorelineresult := "introvert"
+			stmt, err := db.Prepare("update questions set answer1 = ?, answer2 =?, scoreline=? where id=?")
+			ErrorCheck(err)
+			stmt.Exec(answer1, answer2, scorelineresult, id)
+		} else {
+			scorelineresult := "extrovert"
+			stmt, err := db.Prepare("update questions set answer1 =?, answer2=?, scoreline=? where id =?")
+			ErrorCheck(err)
+			stmt.Exec(answer1, answer2, scorelineresult, id)
+		}
+		defer db.Close()
+		http.Redirect(w, r, "/", 301)
+	}
+}
+
 func deletePersonalityTraitData(w http.ResponseWriter, r *http.Request) {
 	db := DatabaseConnection()
 	id := r.URL.Query().Get("id")
@@ -169,6 +201,14 @@ func main() {
 
 	/** handle all the routes here */
 	http.HandleFunc("/", returnAllPersonalityQuestions)
+	http.HandleFunc("/start", createNewPersonalityQuestion)
+	http.HandleFunc("/save", saveAnswersToPersonalityTest)
+	http.HandleFunc("/edit", editPersonalityQuestion)
+	http.HandleFunc("/update", updatePersonalityTraitData)
+	http.HandleFunc("/delete", deletePersonalityTraitData)
+
+	/** access the public folder without the leading trail */
+	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
 	/** listen to the running Port here */
 	http.ListenAndServe(":9400", nil)
